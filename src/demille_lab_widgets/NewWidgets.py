@@ -5,6 +5,11 @@ from __future__ import annotations
 import logging
 import math
 
+import os
+
+# This distribution targets PyQt5. Prevent pyqtgraph from choosing another Qt binding.
+os.environ["PYQTGRAPH_QT_LIB"] = "PyQt5"
+
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets as qt

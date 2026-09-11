@@ -92,12 +92,31 @@ class NewBox(qt.QGroupBox):
 
         self.frame = factory()
         self.frame.setContentsMargins(0, 0, 0, 0)
-        if isinstance(self.frame, qt.QFormLayout):
+        self._styles_form = isinstance(self.frame, qt.QFormLayout)
+        if self._styles_form:
             self.frame.setHorizontalSpacing(0)
-            self.setStyleSheet(
-                "QGroupBox {border: 0; padding-left: 0; padding-right: 0;}"
-            )
+            self._apply_form_style()
         self.setLayout(self.frame)
+
+    def _apply_form_style(self):
+        """Re-apply the form style sheet, reserving room for the title.
+
+        A style sheet makes Qt derive the contents rect from the CSS box model,
+        which drops the strip a QGroupBox otherwise reserves for its title. Add
+        that strip back as top padding whenever a title is set, so the first row
+        of the form is not drawn underneath the title.
+        """
+        padding_top = self.fontMetrics().height() if self.title() else 0
+        self.setStyleSheet(
+            "QGroupBox {border: 0; padding-left: 0; padding-right: 0;"
+            f" padding-top: {padding_top}px;}}"
+        )
+
+    def setTitle(self, title):
+        super().setTitle(title)
+        # Qt may call setTitle before __init__ has chosen a layout.
+        if getattr(self, "_styles_form", False):
+            self._apply_form_style()
 
 
 class _FocusedWheelMixin:

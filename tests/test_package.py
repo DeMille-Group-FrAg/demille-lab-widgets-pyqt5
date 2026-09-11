@@ -3,7 +3,7 @@ import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 
 import demille_lab_widgets as widgets
 from demille_lab_widgets.scientificspin import (
@@ -101,6 +101,47 @@ class PackageTests(unittest.TestCase):
         second = QLabel("second")
         layout.addWidget(second, 0, 1)
         self.assertIs(layout._cells[0, 1].itemAt(0).widget(), second)
+
+    def _shown_form_box(self, title):
+        """Return a realized, parented form box plus its first field widget."""
+        parent = QWidget()
+        layout = QVBoxLayout(parent)
+        box = widgets.NewBox(layout_type="form")
+        if title is not None:
+            box.setTitle(title)
+        field = QLabel("field")
+        box.frame.addRow("Voltage", field)
+        layout.addWidget(box)
+        parent.resize(300, 200)
+        parent.show()
+        self.app.processEvents()
+        self.addCleanup(parent.hide)
+        return box, field
+
+    def test_titled_form_box_reserves_room_for_its_title(self):
+        box, field = self._shown_form_box("Scan parameters")
+        title_strip = box.getContentsMargins()[1]
+        self.assertGreaterEqual(title_strip, box.fontMetrics().height())
+        # The first row starts below the title rather than underneath it.
+        self.assertGreaterEqual(field.geometry().top(), title_strip)
+
+    def test_untitled_form_box_keeps_zero_margins(self):
+        box, field = self._shown_form_box(None)
+        self.assertEqual(box.getContentsMargins(), (0, 0, 0, 0))
+        self.assertEqual(field.geometry().top(), 0)
+
+    def test_clearing_a_form_box_title_releases_the_reserved_space(self):
+        box, _ = self._shown_form_box("Scan parameters")
+        box.setTitle("")
+        self.app.processEvents()
+        self.assertEqual(box.getContentsMargins(), (0, 0, 0, 0))
+
+    def test_titled_box_layouts_other_than_form_are_unchanged(self):
+        for layout_type in ("grid", "vbox", "hbox"):
+            box = widgets.NewBox(layout_type=layout_type)
+            box.setTitle("Title")
+            self.assertGreater(box.getContentsMargins()[1], 0, layout_type)
+            self.assertEqual(box.styleSheet(), "", layout_type)
 
     def test_negative_frozen_counts_are_rejected(self):
         with self.assertRaises(ValueError):

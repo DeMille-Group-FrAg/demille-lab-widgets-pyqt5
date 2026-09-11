@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "demille-lab-widgets-pyqt5"
-version = "0.1.1"
+version = "0.1.2"
 description = "Improved PyQt5 widgets for laboratory control systems"
 readme = "README.md"
 license = "MIT"

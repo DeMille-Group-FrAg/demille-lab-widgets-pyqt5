@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 - 2026-09-11
+
+- Reserve room for the title on `NewBox(layout_type="form")`. The style sheet
+  that removes the form box's border made Qt derive the contents rect from the
+  CSS box model, so a box with a title drew its first row underneath the title
+  text. Untitled form boxes keep their zero margins.
+
 ## 0.1.1 - 2026-09-11
 
 - Select PyQt5 for PyQtGraph before importing it, so PyQtGraph no longer

@@ -40,6 +40,10 @@ The public classes are:
 
 `NewSpinBox`, `NewDoubleSpinBox`, and `NewComboBox` ignore mouse-wheel changes until they have keyboard focus. The numeric spin boxes also change their step size according to the cursor position. Keyboard tracking is disabled so typed values are committed when Enter is pressed or focus is lost.
 
+`NewBox` exposes its layout as `frame` and keeps zero margins around it. In
+`form` mode the box is drawn without a border; calling `setTitle()` adds back
+only the vertical space the title text needs.
+
 ## Development
 
 Create a virtual environment, then install the package in editable form:

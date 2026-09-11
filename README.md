@@ -59,8 +59,9 @@ their own licenses; see [Third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Acknowledgements
 
-The widget collection was originally developed by Olivier and Jakob for the
-CeNTREX experiment. Wang subsequently brought it into the DeMille Lab control
-software and developed additional improvements. Shaozhen later extracted it
-into this standalone package, coordinated the licensing review, and prepared
-the public release. See [project history and contributors](AUTHORS.md).
+The widget collection was originally developed for CeNTREX by Olivier Grasdijk
+and Jakob Kastelic. Qian Wang subsequently brought it into the SrF control
+software and developed additional improvements. Shaozhen Yang later adapted it
+for FrAg, extracted it into this standalone package, coordinated the licensing
+review, and prepared the public release. See the full
+[project history and contributors](https://github.com/DeMille-Group-FrAg/demille-lab-widgets-pyqt5/blob/main/AUTHORS.md).

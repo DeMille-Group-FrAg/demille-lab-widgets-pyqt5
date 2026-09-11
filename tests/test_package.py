@@ -65,6 +65,42 @@ class PackageTests(unittest.TestCase):
         self.assertFalse(table.frozenColTableView.isColumnHidden(0))
         self.assertTrue(table.frozenColTableView.isColumnHidden(1))
 
+    def _populated_table(self, rows=6, cols=5):
+        table = widgets.NewTableWidget(frozenRows=1, frozenCols=1)
+        table.setRowCount(rows)
+        table.setColumnCount(cols)
+        return table
+
+    def test_freezing_keeps_the_table_sections_visible(self):
+        """Hiding sections in the overlays must not collapse this table."""
+        table = self._populated_table()
+        self.assertTrue(all(table.rowHeight(r) > 0 for r in range(table.rowCount())))
+        self.assertTrue(
+            all(table.columnWidth(c) > 0 for c in range(table.columnCount()))
+        )
+
+    def test_hiding_frozen_sections_keeps_the_table_sections_visible(self):
+        table = self._populated_table()
+        table.hideFrozenRows(range(1, table.rowCount()))
+        table.hideFrozenCols(range(1, table.columnCount()))
+        self.assertTrue(all(table.rowHeight(r) > 0 for r in range(table.rowCount())))
+        self.assertTrue(
+            all(table.columnWidth(c) > 0 for c in range(table.columnCount()))
+        )
+
+    def test_section_resizes_propagate_in_both_directions(self):
+        table = self._populated_table()
+        table.setColumnWidth(0, 150)
+        self.assertEqual(table.frozenColTableView.columnWidth(0), 150)
+        self.assertEqual(table.frozenCornerTableView.columnWidth(0), 150)
+
+        table.frozenColTableView.horizontalHeader().resizeSection(0, 90)
+        self.assertEqual(table.columnWidth(0), 90)
+
+        # The frozen/unfrozen split is unchanged by the resizes.
+        self.assertFalse(table.frozenRowTableView.isRowHidden(0))
+        self.assertTrue(table.frozenRowTableView.isRowHidden(1))
+
     def test_scientific_number_validation(self):
         for value in ("0", "-1.25", ".5", "1.23e+4", "-2E-3"):
             self.assertTrue(valid_float_string(value), value)
@@ -142,6 +178,21 @@ class PackageTests(unittest.TestCase):
             box.setTitle("Title")
             self.assertGreater(box.getContentsMargins()[1], 0, layout_type)
             self.assertEqual(box.styleSheet(), "", layout_type)
+
+    def test_occupied_grid_cell_keeps_the_first_widget(self):
+        layout = widgets.FlexibleGridLayout(grid_num=2)
+        first, second = QLabel("first"), QLabel("second")
+        layout.addWidget(first, 0, 0)
+        with self.assertLogs(level="WARNING"):
+            layout.addWidget(second, 0, 0)
+        self.assertIs(layout._cells[0, 0].itemAt(0).widget(), first)
+
+    def test_grid_cells_outside_the_layout_are_rejected(self):
+        layout = widgets.FlexibleGridLayout(grid_num=2)
+        with self.assertRaises(IndexError):
+            layout.addWidget(QLabel("x"), 5, 0)
+        with self.assertRaises(IndexError):
+            layout.addWidget(QLabel("x"), 0, 5)
 
     def test_negative_frozen_counts_are_rejected(self):
         with self.assertRaises(ValueError):

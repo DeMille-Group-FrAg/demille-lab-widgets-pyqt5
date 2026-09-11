@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets as qt
 
@@ -79,29 +81,53 @@ class NewTableWidget(qt.QTableWidget):
         view.show()
         return view
 
+    @contextmanager
+    def _overlay_sizes_detached(self):
+        """Stop the overlays from echoing section sizes back into this table.
+
+        Hiding a section resizes it to zero, and an overlay's ``sectionResized``
+        signal is wired to resize the matching section here. Without this the
+        overlays would collapse every row and column they hide.
+        """
+        headers = [
+            header
+            for view in self._overlays
+            for header in (view.horizontalHeader(), view.verticalHeader())
+        ]
+        previous = [header.blockSignals(True) for header in headers]
+        try:
+            yield
+        finally:
+            for header, state in zip(headers, previous):
+                header.blockSignals(state)
+
     def _refresh_overlays(self):
         row_count = self.model().rowCount()
         column_count = self.model().columnCount()
         frozen_rows = min(self.frozenRows, row_count)
         frozen_columns = min(self.frozenCols, column_count)
 
-        for row in range(row_count):
-            frozen = row < frozen_rows
-            self.frozenRowTableView.setRowHidden(row, not frozen)
-            self.frozenCornerTableView.setRowHidden(row, not frozen)
-            self.frozenColTableView.setRowHidden(row, False)
-            height = self.rowHeight(row)
-            for view in self._overlays:
-                view.setRowHeight(row, height)
+        # Read this table's sizes before touching the overlays, which hide
+        # sections and would otherwise report those hidden sizes back.
+        heights = [self.rowHeight(row) for row in range(row_count)]
+        widths = [self.columnWidth(column) for column in range(column_count)]
 
-        for column in range(column_count):
-            frozen = column < frozen_columns
-            self.frozenColTableView.setColumnHidden(column, not frozen)
-            self.frozenCornerTableView.setColumnHidden(column, not frozen)
-            self.frozenRowTableView.setColumnHidden(column, False)
-            width = self.columnWidth(column)
-            for view in self._overlays:
-                view.setColumnWidth(column, width)
+        with self._overlay_sizes_detached():
+            for row in range(row_count):
+                frozen = row < frozen_rows
+                for view in self._overlays:
+                    view.setRowHeight(row, heights[row])
+                self.frozenRowTableView.setRowHidden(row, not frozen)
+                self.frozenCornerTableView.setRowHidden(row, not frozen)
+                self.frozenColTableView.setRowHidden(row, False)
+
+            for column in range(column_count):
+                frozen = column < frozen_columns
+                for view in self._overlays:
+                    view.setColumnWidth(column, widths[column])
+                self.frozenColTableView.setColumnHidden(column, not frozen)
+                self.frozenCornerTableView.setColumnHidden(column, not frozen)
+                self.frozenRowTableView.setColumnHidden(column, False)
 
         self._update_geometries()
 
@@ -180,14 +206,16 @@ class NewTableWidget(qt.QTableWidget):
         self.setRowHeight(logicalIndex, newSize)
 
     def hideFrozenCols(self, columns):
-        for column in columns:
-            self.frozenColTableView.setColumnHidden(column, True)
-            self.frozenCornerTableView.setColumnHidden(column, True)
+        with self._overlay_sizes_detached():
+            for column in columns:
+                self.frozenColTableView.setColumnHidden(column, True)
+                self.frozenCornerTableView.setColumnHidden(column, True)
 
     def hideFrozenRows(self, rows):
-        for row in rows:
-            self.frozenRowTableView.setRowHidden(row, True)
-            self.frozenCornerTableView.setRowHidden(row, True)
+        with self._overlay_sizes_detached():
+            for row in rows:
+                self.frozenRowTableView.setRowHidden(row, True)
+                self.frozenCornerTableView.setRowHidden(row, True)
 
     def setColumnCount(self, columnCount):
         super().setColumnCount(columnCount)

@@ -2,10 +2,17 @@
 
 ## 0.1.2 - 2026-09-11
 
+- Stop `NewTableWidget` from collapsing its own rows and columns. Hiding a
+  section in a frozen overlay resizes that section to zero, and the overlay
+  reported the change back to the table, so every unfrozen row and column ended
+  up zero-sized and the table rendered empty.
 - Reserve room for the title on `NewBox(layout_type="form")`. The style sheet
   that removes the form box's border made Qt derive the contents rect from the
   CSS box model, so a box with a title drew its first row underneath the title
   text. Untitled form boxes keep their zero margins.
+- Log a warning instead of raising when `FlexibleGridLayout.addWidget` targets
+  an occupied cell, so a duplicated position in a configuration file costs one
+  widget rather than the window.
 
 ## 0.1.1 - 2026-09-11
 

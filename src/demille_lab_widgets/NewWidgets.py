@@ -60,7 +60,12 @@ class FlexibleGridLayout(qt.QHBoxLayout):
         except KeyError as exc:
             raise IndexError(f"cell ({row}, {col}) is outside the layout") from exc
         if cell.count():
-            raise ValueError(f"cell ({row}, {col}) is already occupied")
+            # Callers lay these grids out from configuration files, where a
+            # double-booked cell should cost one widget rather than the window.
+            logging.warning(
+                "FlexibleGridLayout: cell (%d, %d) is already occupied", row, col
+            )
+            return
         cell.addWidget(widget)
 
     def clear(self):

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.2 - 2026-09-11
+## 0.1.3 - 2026-09-11
 
 - Stop `NewTableWidget` from collapsing its own rows and columns. Hiding a
   section in a frozen overlay resizes that section to zero, and the overlay

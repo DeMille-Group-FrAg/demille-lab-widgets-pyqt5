@@ -12,7 +12,7 @@ from .NewWidgets import (
 from .NewTableWidget import NewTableWidget
 from .scientificspin import ScientificDoubleSpinBox
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 __all__ = [
     "FlexibleGridLayout",

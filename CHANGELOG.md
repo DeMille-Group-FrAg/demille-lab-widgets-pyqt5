@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.5 - 2026-10-01
 
 - Keep `NewTableWidget`'s frozen rows and columns aligned with the table. The
   overlays enforced their own minimum section size, so a row shorter than that

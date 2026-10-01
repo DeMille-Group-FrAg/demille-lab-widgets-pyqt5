@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Keep `NewTableWidget`'s frozen rows and columns aligned with the table. The
+  overlays enforced their own minimum section size, so a row shorter than that
+  minimum (30 px against 31 px on a scaled Windows display) was drawn taller in
+  the frozen column, which drifted one pixel further off its row every row.
+  The frozen-row overlay also sized its row header only for the numbers it
+  shows, so with ten or more rows its cells sat left of their columns.
+
 ## 0.1.4 - 2026-09-14
 
 - Link each contributor named in the acknowledgements to their GitHub account.

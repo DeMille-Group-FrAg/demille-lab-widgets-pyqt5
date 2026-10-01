@@ -101,6 +101,40 @@ class PackageTests(unittest.TestCase):
         self.assertFalse(table.frozenRowTableView.isRowHidden(0))
         self.assertTrue(table.frozenRowTableView.isRowHidden(1))
 
+    def test_overlays_mirror_sections_smaller_than_their_own_minimum(self):
+        """An overlay clamping a size would drift its cells off the rows beside them."""
+        table = self._populated_table()
+        table.verticalHeader().setMinimumSectionSize(0)
+        table.horizontalHeader().setMinimumSectionSize(0)
+        table.setRowHeight(1, 5)
+        table.setColumnWidth(1, 5)
+        # Only these overlays show row 1 and column 1; hidden sections report 0.
+        self.assertEqual(table.frozenColTableView.rowHeight(1), 5)
+        self.assertEqual(table.frozenRowTableView.columnWidth(1), 5)
+
+    def test_overlay_headers_match_the_table_headers(self):
+        """Frozen cells sit where the table's own cells are, beside its headers."""
+        table = self._populated_table(rows=150, cols=4)
+        table.resize(400, 300)
+        table.show()
+        self.addCleanup(table.close)
+        self.app.processEvents()
+        width = table.verticalHeader().width()
+        height = table.horizontalHeader().height()
+        for view in (table.frozenRowTableView, table.frozenCornerTableView):
+            self.assertEqual(view.verticalHeader().width(), width)
+        for view in (table.frozenColTableView, table.frozenCornerTableView):
+            self.assertEqual(view.horizontalHeader().height(), height)
+
+        # Rows added later widen the table's header for the extra digit.
+        table.setRowCount(1500)
+        self.app.processEvents()
+        self.assertGreater(table.verticalHeader().width(), width)
+        self.assertEqual(
+            table.frozenRowTableView.verticalHeader().width(),
+            table.verticalHeader().width(),
+        )
+
     def test_scientific_number_validation(self):
         for value in ("0", "-1.25", ".5", "1.23e+4", "-2E-3"):
             self.assertTrue(valid_float_string(value), value)

@@ -76,8 +76,12 @@ class NewTableWidget(qt.QTableWidget):
         view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         view.setStyleSheet("QTableView {border: 0; padding: 0;}")
-        view.horizontalHeader().setSectionResizeMode(qt.QHeaderView.Interactive)
-        view.verticalHeader().setSectionResizeMode(qt.QHeaderView.Interactive)
+        for header in (view.horizontalHeader(), view.verticalHeader()):
+            header.setSectionResizeMode(qt.QHeaderView.Interactive)
+            # An overlay only mirrors this table's section sizes. A minimum of
+            # its own would clamp them (a 30 px row drawn 31 px tall), and the
+            # frozen cells would drift further off their rows with every row.
+            header.setMinimumSectionSize(0)
         view.show()
         return view
 
@@ -141,11 +145,20 @@ class NewTableWidget(qt.QTableWidget):
 
     def _update_geometries(self):
         frame = self.frameWidth()
-        header_width = self.verticalHeader().width()
-        header_height = self.horizontalHeader().height()
+        vertical, horizontal = self.verticalHeader(), self.horizontalHeader()
+        header_width = 0 if vertical.isHidden() else vertical.width()
+        header_height = 0 if horizontal.isHidden() else horizontal.height()
         viewport = self.viewport()
         width = self._frozen_width()
         height = self._frozen_height()
+
+        # Each overlay sizes its headers from the sections it shows, so a
+        # frozen row would otherwise get a header only wide enough for "1"
+        # and its cells would sit left of the columns they belong to.
+        for view in self._overlays:
+            view.verticalHeader().setFixedWidth(header_width)
+            view.horizontalHeader().setFixedHeight(header_height)
+            view.updateGeometries()
 
         self.frozenColTableView.setGeometry(
             header_width + frame,
@@ -226,6 +239,13 @@ class NewTableWidget(qt.QTableWidget):
         super().setRowCount(rowCount)
         if hasattr(self, "frozenRowTableView"):
             self._refresh_overlays()
+
+    def updateGeometries(self):
+        # Qt calls this whenever the headers or viewport change size, e.g. when
+        # a new row count needs another digit in the row header.
+        super().updateGeometries()
+        if hasattr(self, "frozenCornerTableView"):
+            self._update_geometries()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
